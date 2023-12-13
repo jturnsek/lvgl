@@ -113,6 +113,10 @@ typedef struct {
     lv_style_t meter_marker, meter_indic;
 #endif
 
+#if LV_USE_PHASOR
+    lv_style_t phasor_marker, phasor_indic;
+#endif
+
 #if LV_USE_TEXTAREA
     lv_style_t ta_cursor, ta_placeholder;
 #endif
@@ -537,6 +541,20 @@ static void style_init(void)
     lv_style_set_bg_color(&styles->meter_indic, color_text);
     lv_style_set_bg_opa(&styles->meter_indic, LV_OPA_COVER);
     lv_style_set_size(&styles->meter_indic, lv_disp_dpx(theme.disp, 15));
+#endif
+
+#if LV_USE_PHASOR
+    style_init_reset(&styles->phasor_marker);
+    lv_style_set_line_width(&styles->phasor_marker, lv_disp_dpx(theme.disp, 5));
+    lv_style_set_line_color(&styles->phasor_marker, color_text);
+    lv_style_set_size(&styles->phasor_marker, lv_disp_dpx(theme.disp, 20));
+    lv_style_set_pad_left(&styles->phasor_marker, lv_disp_dpx(theme.disp, 15));
+
+    style_init_reset(&styles->phasor_indic);
+    lv_style_set_radius(&styles->phasor_indic, LV_RADIUS_CIRCLE);
+    lv_style_set_bg_color(&styles->phasor_indic, color_text);
+    lv_style_set_bg_opa(&styles->phasor_indic, LV_OPA_COVER);
+    lv_style_set_size(&styles->phasor_indic, lv_disp_dpx(theme.disp, 15));
 #endif
 
 #if LV_USE_TABLE
@@ -992,6 +1010,14 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
         lv_obj_add_style(obj, &styles->card, 0);
         lv_obj_add_style(obj, &styles->circle, 0);
         lv_obj_add_style(obj, &styles->meter_indic, LV_PART_INDICATOR);
+    }
+#endif
+
+#if LV_USE_PHASOR
+    else if(lv_obj_check_type(obj, &lv_phasor_class)) {
+        lv_obj_add_style(obj, &styles->card, 0);
+        lv_obj_add_style(obj, &styles->circle, 0);
+        lv_obj_add_style(obj, &styles->phasor_indic, LV_PART_INDICATOR);
     }
 #endif
 

@@ -1784,6 +1784,18 @@
     #endif
 #endif
 
+#ifndef LV_USE_PHASOR
+    #ifdef _LV_KCONFIG_PRESENT
+        #ifdef CONFIG_LV_USE_PHASOR
+            #define LV_USE_PHASOR CONFIG_LV_USE_PHASOR
+        #else
+            #define LV_USE_PHASOR 0
+        #endif
+    #else
+        #define LV_USE_PHASOR     1
+    #endif
+#endif
+
 #ifndef LV_USE_SPAN
     #ifdef _LV_KCONFIG_PRESENT
         #ifdef CONFIG_LV_USE_SPAN

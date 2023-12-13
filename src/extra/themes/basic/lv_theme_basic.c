@@ -340,6 +340,12 @@ static void theme_apply(lv_theme_t * th, lv_obj_t * obj)
     }
 #endif
 
+#if LV_USE_PHASOR
+    else if(lv_obj_check_type(obj, &lv_phasor_class)) {
+        lv_obj_add_style(obj, &styles->light, 0);
+    }
+#endif
+
 #if LV_USE_TEXTAREA
     else if(lv_obj_check_type(obj, &lv_textarea_class)) {
         lv_obj_add_style(obj, &styles->white, 0);

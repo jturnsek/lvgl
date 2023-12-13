@@ -23,6 +23,7 @@ extern "C" {
 #include "menu/lv_menu.h"
 #include "msgbox/lv_msgbox.h"
 #include "meter/lv_meter.h"
+#include "phasor/lv_phasor.h"
 #include "spinbox/lv_spinbox.h"
 #include "spinner/lv_spinner.h"
 #include "tabview/lv_tabview.h"
