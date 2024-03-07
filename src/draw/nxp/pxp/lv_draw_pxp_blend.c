@@ -34,7 +34,7 @@
 #include "lv_draw_pxp_blend.h"
 
 #if LV_USE_GPU_NXP_PXP
-#include "lvgl_support.h"
+//#include "lvgl_support.h"
 
 /*********************
  *      DEFINES
