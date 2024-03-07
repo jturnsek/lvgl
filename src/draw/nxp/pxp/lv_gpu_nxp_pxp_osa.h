@@ -56,11 +56,6 @@ extern "C" {
  **********************/
 
 /**
- * PXP device interrupt handler. Used to check PXP task completion status.
- */
-void PXP_IRQHandler(void);
-
-/**
  * Helper function to get the PXP default configuration.
  */
 lv_nxp_pxp_cfg_t * lv_gpu_nxp_pxp_get_cfg(void);

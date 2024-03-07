@@ -35,7 +35,7 @@
 
 #if LV_USE_GPU_NXP_PXP && LV_USE_GPU_NXP_PXP_AUTO_INIT
 #include "../../../misc/lv_log.h"
-#include "fsl_pxp.h"
+#include "imxrt_pxp.h"
 
 #if defined(SDK_OS_FREE_RTOS)
     #include "FreeRTOS.h"
@@ -98,14 +98,14 @@ static lv_nxp_pxp_cfg_t pxp_default_cfg = {
  *   GLOBAL FUNCTIONS
  **********************/
 
-void PXP_IRQHandler(void)
+static int imxrt_pxp_interrupt(int irq, void *context, void *arg)
 {
 #if defined(SDK_OS_FREE_RTOS)
     BaseType_t taskAwake = pdFALSE;
 #endif
 
-    if(kPXP_CompleteFlag & PXP_GetStatusFlags(LV_GPU_NXP_PXP_ID)) {
-        PXP_ClearStatusFlags(LV_GPU_NXP_PXP_ID, kPXP_CompleteFlag);
+    if(PXP_COMPLETE_FLAG & pxp_get_status_flags()) {
+        pxp_clear_status_flags(PXP_COMPLETE_FLAG);
 #if defined(SDK_OS_FREE_RTOS)
         xSemaphoreGiveFromISR(s_pxpIdleSem, &taskAwake);
         portYIELD_FROM_ISR(taskAwake);
@@ -113,6 +113,8 @@ void PXP_IRQHandler(void)
         s_pxpIdle = true;
 #endif
     }
+
+    return 0;
 }
 
 lv_nxp_pxp_cfg_t * lv_gpu_nxp_pxp_get_cfg(void)
@@ -135,14 +137,15 @@ static lv_res_t _lv_gpu_nxp_pxp_interrupt_init(void)
 #endif
     s_pxpIdle = true;
 
-    NVIC_EnableIRQ(LV_GPU_NXP_PXP_IRQ_ID);
+    irq_attach(LV_GPU_NXP_PXP_IRQ_ID, imxrt_pxp_interrupt, NULL);
+    up_enable_irq(LV_GPU_NXP_PXP_IRQ_ID);
 
     return LV_RES_OK;
 }
 
 static void _lv_gpu_nxp_pxp_interrupt_deinit(void)
 {
-    NVIC_DisableIRQ(LV_GPU_NXP_PXP_IRQ_ID);
+    up_disable_irq(LV_GPU_NXP_PXP_IRQ_ID);
 #if defined(SDK_OS_FREE_RTOS)
     vSemaphoreDelete(s_pxpIdleSem);
 #endif
@@ -155,8 +158,8 @@ static void _lv_gpu_nxp_pxp_run(void)
 {
     s_pxpIdle = false;
 
-    PXP_EnableInterrupts(LV_GPU_NXP_PXP_ID, kPXP_CompleteInterruptEnable);
-    PXP_Start(LV_GPU_NXP_PXP_ID);
+    pxp_enable_interrupts(PXP_COMPLETE_INTERRUPT_ENABLE);
+    pxp_start();
 }
 
 /**

@@ -78,16 +78,15 @@ lv_res_t lv_gpu_nxp_pxp_init(void)
        !pxp_cfg->pxp_run || !pxp_cfg->pxp_wait)
         PXP_RETURN_INV("PXP configuration error.");
 
-    PXP_Init(LV_GPU_NXP_PXP_ID);
+    pxp_init();
 
-    PXP_EnableCsc1(LV_GPU_NXP_PXP_ID, false); /*Disable CSC1, it is enabled by default.*/
-    PXP_SetProcessBlockSize(LV_GPU_NXP_PXP_ID, kPXP_BlockSize16); /*Block size 16x16 for higher performance*/
+    pxp_enable_csc1(false); /*Disable CSC1, it is enabled by default.*/
+    pxp_set_process_block_size(PXP_BLOCK_SIZE16); /*Block size 16x16 for higher performance*/
 
-    PXP_EnableInterrupts(LV_GPU_NXP_PXP_ID, kPXP_CompleteInterruptEnable);
+    pxp_enable_interrupts(PXP_COMPLETE_INTERRUPT_ENABLE);
 
     if(pxp_cfg->pxp_interrupt_init() != LV_RES_OK) {
-        PXP_DisableInterrupts(LV_GPU_NXP_PXP_ID, kPXP_CompleteInterruptEnable);
-        PXP_Deinit(LV_GPU_NXP_PXP_ID);
+        pxp_disable_interrupts(PXP_COMPLETE_INTERRUPT_ENABLE);
         PXP_RETURN_INV("PXP interrupt init failed.");
     }
 
@@ -97,8 +96,7 @@ lv_res_t lv_gpu_nxp_pxp_init(void)
 void lv_gpu_nxp_pxp_deinit(void)
 {
     pxp_cfg->pxp_interrupt_deinit();
-    PXP_DisableInterrupts(LV_GPU_NXP_PXP_ID, kPXP_CompleteInterruptEnable);
-    PXP_Deinit(LV_GPU_NXP_PXP_ID);
+    pxp_disable_interrupts(PXP_COMPLETE_INTERRUPT_ENABLE);
 }
 
 void lv_gpu_nxp_pxp_reset(void)
@@ -106,15 +104,15 @@ void lv_gpu_nxp_pxp_reset(void)
     /* Wait for previous command to complete before resetting the registers. */
     lv_gpu_nxp_pxp_wait();
 
-    PXP_ResetControl(LV_GPU_NXP_PXP_ID);
+    pxp_reset_control();
 
-    PXP_EnableCsc1(LV_GPU_NXP_PXP_ID, false); /*Disable CSC1, it is enabled by default.*/
-    PXP_SetProcessBlockSize(LV_GPU_NXP_PXP_ID, kPXP_BlockSize16); /*Block size 16x16 for higher performance*/
+    pxp_enable_csc1(false); /*Disable CSC1, it is enabled by default.*/
+    pxp_set_process_block_size(PXP_BLOCK_SIZE16); /*Block size 16x16 for higher performance*/
 }
 
 void lv_gpu_nxp_pxp_run(void)
 {
-    invalidate_cache();
+    //invalidate_cache();
 
     pxp_cfg->pxp_run();
 }

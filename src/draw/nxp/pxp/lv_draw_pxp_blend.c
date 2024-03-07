@@ -45,18 +45,18 @@
 #endif
 
 #if LV_COLOR_DEPTH == 16
-    #define PXP_OUT_PIXEL_FORMAT kPXP_OutputPixelFormatRGB565
-    #define PXP_AS_PIXEL_FORMAT kPXP_AsPixelFormatRGB565
-    #define PXP_PS_PIXEL_FORMAT kPXP_PsPixelFormatRGB565
+    #define PXP_OUT_PIXEL_FORMAT PXP_OUTPUT_PIXEL_FORMAT_RGB565
+    #define PXP_AS_PIXEL_FORMAT PXP_AS_PIXEL_FORMAT_RGB565
+    #define PXP_PS_PIXEL_FORMAT PXP_PS_PIXEL_FORMAT_RGB565
     #define PXP_TEMP_BUF_SIZE LCD_WIDTH * LCD_HEIGHT * 2U
 #elif LV_COLOR_DEPTH == 32
-    #define PXP_OUT_PIXEL_FORMAT kPXP_OutputPixelFormatARGB8888
-    #define PXP_AS_PIXEL_FORMAT kPXP_AsPixelFormatARGB8888
+    #define PXP_OUT_PIXEL_FORMAT PXP_OUTPUT_PIXEL_FORMAT_ARGB8888
+    #define PXP_AS_PIXEL_FORMAT PXP_AS_PIXEL_FORMAT_ARGB8888
     #if (!(defined(FSL_FEATURE_PXP_HAS_NO_EXTEND_PIXEL_FORMAT) && FSL_FEATURE_PXP_HAS_NO_EXTEND_PIXEL_FORMAT)) && \
         (!(defined(FSL_FEATURE_PXP_V3) && FSL_FEATURE_PXP_V3))
-        #define PXP_PS_PIXEL_FORMAT kPXP_PsPixelFormatARGB8888
+        #define PXP_PS_PIXEL_FORMAT PXP_PS_PIXEL_FORMAT_ARGB8888
     #else
-        #define PXP_PS_PIXEL_FORMAT kPXP_PsPixelFormatRGB888
+        #define PXP_PS_PIXEL_FORMAT PXP_PS_PIXEL_FORMAT_RGB888
     #endif
     #define PXP_TEMP_BUF_SIZE LCD_WIDTH * LCD_HEIGHT * 4U
 #elif
@@ -149,7 +149,7 @@ void lv_gpu_nxp_pxp_fill(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     /*OUT buffer configure*/
     pxp_output_buffer_config_t outputConfig = {
         .pixelFormat = PXP_OUT_PIXEL_FORMAT,
-        .interlacedMode = kPXP_OutputProgressive,
+        .interlacedMode = PXP_OUTPUT_PROGRESSIVE,
         .buffer0Addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
         .buffer1Addr = (uint32_t)NULL,
         .pitchBytes = dest_stride * sizeof(lv_color_t),
@@ -157,11 +157,11 @@ void lv_gpu_nxp_pxp_fill(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
         .height = dest_h
     };
 
-    PXP_SetOutputBufferConfig(LV_GPU_NXP_PXP_ID, &outputConfig);
+    pxp_set_output_buffer_config(&outputConfig);
 
     if(opa >= (lv_opa_t)LV_OPA_MAX) {
         /*Simple color fill without opacity - AS disabled*/
-        PXP_SetAlphaSurfacePosition(LV_GPU_NXP_PXP_ID, 0xFFFFU, 0xFFFFU, 0U, 0U);
+        pxp_set_alpha_surface_position(0xFFFFU, 0xFFFFU, 0U, 0U);
 
     }
     else {
@@ -172,13 +172,13 @@ void lv_gpu_nxp_pxp_fill(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
             .pitchBytes = outputConfig.pitchBytes
         };
 
-        PXP_SetAlphaSurfaceBufferConfig(LV_GPU_NXP_PXP_ID, &asBufferConfig);
-        PXP_SetAlphaSurfacePosition(LV_GPU_NXP_PXP_ID, 0U, 0U, dest_w - 1U, dest_h - 1U);
+        pxp_set_alpha_surface_buffer_config(&asBufferConfig);
+        pxp_set_alpha_surface_position(0U, 0U, dest_w - 1U, dest_h - 1U);
     }
 
     /*Disable PS, use as color generator*/
-    PXP_SetProcessSurfacePosition(LV_GPU_NXP_PXP_ID, 0xFFFFU, 0xFFFFU, 0U, 0U);
-    PXP_SetProcessSurfaceBackGroundColor(LV_GPU_NXP_PXP_ID, lv_color_to32(color));
+    pxp_set_process_surface_position(0xFFFFU, 0xFFFFU, 0U, 0U);
+    pxp_set_process_surface_back_ground_color(lv_color_to32(color));
 
     /**
      * Configure Porter-Duff blending - src settings are unused for fill without opacity (opa = 0xff).
@@ -189,19 +189,19 @@ void lv_gpu_nxp_pxp_fill(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
      */
     pxp_porter_duff_config_t pdConfig = {
         .enable = 1,
-        .dstColorMode = kPXP_PorterDuffColorNoAlpha,
-        .srcColorMode = kPXP_PorterDuffColorNoAlpha,
-        .dstGlobalAlphaMode = kPXP_PorterDuffGlobalAlpha,
-        .srcGlobalAlphaMode = kPXP_PorterDuffGlobalAlpha,
-        .dstFactorMode = kPXP_PorterDuffFactorStraight,
-        .srcFactorMode = (opa >= (lv_opa_t)LV_OPA_MAX) ? kPXP_PorterDuffFactorStraight : kPXP_PorterDuffFactorInversed,
+        .dstColorMode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
+        .srcColorMode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
+        .dstGlobalAlphaMode = PXP_PORTER_DUFF_GLOBAL_ALPHA,
+        .srcGlobalAlphaMode = PXP_PORTER_DUFF_GLOBAL_ALPHA,
+        .dstFactorMode = PXP_PORTER_DUFF_FACTOR_STRAIGHT,
+        .srcFactorMode = (opa >= (lv_opa_t)LV_OPA_MAX) ? PXP_PORTER_DUFF_FACTOR_STRAIGHT : PXP_PORTER_DUFF_FACTOR_INVERSED,
         .dstGlobalAlpha = opa,
         .srcGlobalAlpha = opa,
-        .dstAlphaMode = kPXP_PorterDuffAlphaStraight, /*don't care*/
-        .srcAlphaMode = kPXP_PorterDuffAlphaStraight  /*don't care*/
+        .dstAlphaMode = PXP_PORTER_DUFF_ALPHA_STRAIGHT, /*don't care*/
+        .srcAlphaMode = PXP_PORTER_DUFF_ALPHA_STRAIGHT  /*don't care*/
     };
 
-    PXP_SetPorterDuffConfig(LV_GPU_NXP_PXP_ID, &pdConfig);
+    pxp_set_porter_duff_config(&pdConfig);
 
     lv_gpu_nxp_pxp_run();
 }
@@ -221,33 +221,33 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     pxp_rotate_degree_t pxp_rot;
     switch(angle) {
         case LV_DISP_ROT_NONE:
-            pxp_rot = kPXP_Rotate0;
+            pxp_rot = PXP_ROTATE0;
             break;
         case LV_DISP_ROT_90:
-            pxp_rot = kPXP_Rotate90;
+            pxp_rot = PXP_ROTATE90;
             break;
         case LV_DISP_ROT_180:
-            pxp_rot = kPXP_Rotate180;
+            pxp_rot = PXP_ROTATE180;
             break;
         case LV_DISP_ROT_270:
-            pxp_rot = kPXP_Rotate270;
+            pxp_rot = PXP_ROTATE270;
             break;
         default:
-            pxp_rot = kPXP_Rotate0;
+            pxp_rot = PXP_ROTATE0;
             break;
     }
-    PXP_SetRotateConfig(LV_GPU_NXP_PXP_ID, kPXP_RotateOutputBuffer, pxp_rot, kPXP_FlipDisable);
+    pxp_set_rotate_config(PXP_ROTATE_OUTPUT_BUFFER, pxp_rot, PXP_FLIP_DISABLE);
 
     pxp_as_blend_config_t asBlendConfig = {
         .alpha = opa,
         .invertAlpha = false,
-        .alphaMode = kPXP_AlphaRop,
-        .ropMode = kPXP_RopMergeAs
+        .alphaMode = PXP_ALPHA_ROP,
+        .ropMode = PXP_ROP_MERGE_AS
     };
 
     if(opa >= (lv_opa_t)LV_OPA_MAX) {
         /*Simple blit, no effect - Disable PS buffer*/
-        PXP_SetProcessSurfacePosition(LV_GPU_NXP_PXP_ID, 0xFFFFU, 0xFFFFU, 0U, 0U);
+        pxp_set_process_surface_position(0xFFFFU, 0xFFFFU, 0U, 0U);
     }
     else {
         pxp_ps_buffer_config_t psBufferConfig = {
@@ -259,10 +259,10 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
             .pitchBytes = dest_stride * sizeof(lv_color_t)
         };
 
-        asBlendConfig.alphaMode = kPXP_AlphaOverride;
+        asBlendConfig.alphaMode = PXP_ALPHA_OVERRIDE;
 
-        PXP_SetProcessSurfaceBufferConfig(LV_GPU_NXP_PXP_ID, &psBufferConfig);
-        PXP_SetProcessSurfacePosition(LV_GPU_NXP_PXP_ID, 0U, 0U, dest_w - 1U, dest_h - 1U);
+        pxp_set_process_surface_buffer_config(&psBufferConfig);
+        pxp_set_process_surface_position(0U, 0U, dest_w - 1U, dest_h - 1U);
     }
 
     /*AS buffer - source image*/
@@ -271,22 +271,22 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
         .bufferAddr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
         .pitchBytes = src_stride * sizeof(lv_color_t)
     };
-    PXP_SetAlphaSurfaceBufferConfig(LV_GPU_NXP_PXP_ID, &asBufferConfig);
-    PXP_SetAlphaSurfacePosition(LV_GPU_NXP_PXP_ID, 0U, 0U, src_w - 1U, src_h - 1U);
-    PXP_SetAlphaSurfaceBlendConfig(LV_GPU_NXP_PXP_ID, &asBlendConfig);
-    PXP_EnableAlphaSurfaceOverlayColorKey(LV_GPU_NXP_PXP_ID, false);
+    pxp_set_alpha_surface_buffer_config(&asBufferConfig);
+    pxp_set_alpha_surface_position(0U, 0U, src_w - 1U, src_h - 1U);
+    pxp_set_alpha_surface_blend_config(&asBlendConfig);
+    pxp_enable_alpha_surface_overlay_color_key(false);
 
     /*Output buffer.*/
     pxp_output_buffer_config_t outputBufferConfig = {
         .pixelFormat = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
-        .interlacedMode = kPXP_OutputProgressive,
+        .interlacedMode = PXP_OUTPUT_PROGRESSIVE,
         .buffer0Addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
         .buffer1Addr = (uint32_t)0U,
         .pitchBytes = dest_stride * sizeof(lv_color_t),
         .width = dest_w,
         .height = dest_h
     };
-    PXP_SetOutputBufferConfig(LV_GPU_NXP_PXP_ID, &outputBufferConfig);
+    pxp_set_output_buffer_config(&outputBufferConfig);
 
     lv_gpu_nxp_pxp_run();
 }
@@ -335,7 +335,7 @@ void lv_gpu_nxp_pxp_buffer_copy(lv_color_t * dest_buf, const lv_area_t * dest_ar
         .pixelFormat = PXP_AS_PIXEL_FORMAT
     };
 
-    PXP_StartPictureCopy(LV_GPU_NXP_PXP_ID, &picCopyConfig);
+    pxp_start_picture_copy(&picCopyConfig);
 
     lv_gpu_nxp_pxp_wait();
 }
@@ -389,31 +389,31 @@ static void lv_pxp_blit_cover(lv_color_t * dest_buf, lv_area_t * dest_area, lv_c
         pxp_rotate_degree_t pxp_angle;
         switch(dsc->angle) {
             case 0:
-                pxp_angle = kPXP_Rotate0;
+                pxp_angle = PXP_ROTATE0;
                 piv_offset_x = 0;
                 piv_offset_y = 0;
                 break;
             case 900:
                 piv_offset_x = pivot.x + pivot.y - dest_h;
                 piv_offset_y = pivot.y - pivot.x;
-                pxp_angle = kPXP_Rotate90;
+                pxp_angle = PXP_ROTATE90;
                 break;
             case 1800:
                 piv_offset_x = 2 * pivot.x - dest_w;
                 piv_offset_y = 2 * pivot.y - dest_h;
-                pxp_angle = kPXP_Rotate180;
+                pxp_angle = PXP_ROTATE180;
                 break;
             case 2700:
                 piv_offset_x = pivot.x - pivot.y;
                 piv_offset_y = pivot.x + pivot.y - dest_w;
-                pxp_angle = kPXP_Rotate270;
+                pxp_angle = PXP_ROTATE270;
                 break;
             default:
                 piv_offset_x = 0;
                 piv_offset_y = 0;
-                pxp_angle = kPXP_Rotate0;
+                pxp_angle = PXP_ROTATE0;
         }
-        PXP_SetRotateConfig(LV_GPU_NXP_PXP_ID, kPXP_RotateOutputBuffer, pxp_angle, kPXP_FlipDisable);
+        pxp_set_rotate_config(PXP_ROTATE_OUTPUT_BUFFER, pxp_angle, PXP_FLIP_DISABLE);
         lv_area_move(dest_area, piv_offset_x, piv_offset_y);
     }
 
@@ -423,26 +423,26 @@ static void lv_pxp_blit_cover(lv_color_t * dest_buf, lv_area_t * dest_area, lv_c
         .bufferAddr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
         .pitchBytes = src_stride * sizeof(lv_color_t)
     };
-    PXP_SetAlphaSurfaceBufferConfig(LV_GPU_NXP_PXP_ID, &asBufferConfig);
-    PXP_SetAlphaSurfacePosition(LV_GPU_NXP_PXP_ID, 0U, 0U, src_w - 1U, src_h - 1U);
+    pxp_set_alpha_surface_buffer_config(&asBufferConfig);
+    pxp_set_alpha_surface_position(0U, 0U, src_w - 1U, src_h - 1U);
 
     /*Disable PS buffer*/
-    PXP_SetProcessSurfacePosition(LV_GPU_NXP_PXP_ID, 0xFFFFU, 0xFFFFU, 0U, 0U);
+    pxp_set_process_surface_position(0xFFFFU, 0xFFFFU, 0U, 0U);
     if(has_recolor)
         /*Use as color generator*/
-        PXP_SetProcessSurfaceBackGroundColor(LV_GPU_NXP_PXP_ID, lv_color_to32(dsc->recolor));
+        pxp_set_process_surface_back_ground_color(lv_color_to32(dsc->recolor));
 
     /*Output buffer*/
     pxp_output_buffer_config_t outputBufferConfig = {
         .pixelFormat = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
-        .interlacedMode = kPXP_OutputProgressive,
+        .interlacedMode = PXP_OUTPUT_PROGRESSIVE,
         .buffer0Addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
         .buffer1Addr = (uint32_t)0U,
         .pitchBytes = dest_stride * sizeof(lv_color_t),
         .width = dest_w,
         .height = dest_h
     };
-    PXP_SetOutputBufferConfig(LV_GPU_NXP_PXP_ID, &outputBufferConfig);
+    pxp_set_output_buffer_config(&outputBufferConfig);
 
     if(has_recolor || lv_img_cf_has_alpha(cf)) {
         /**
@@ -454,18 +454,18 @@ static void lv_pxp_blit_cover(lv_color_t * dest_buf, lv_area_t * dest_area, lv_c
          */
         pxp_porter_duff_config_t pdConfig = {
             .enable = 1,
-            .dstColorMode = kPXP_PorterDuffColorWithAlpha,
-            .srcColorMode = kPXP_PorterDuffColorNoAlpha,
-            .dstGlobalAlphaMode = kPXP_PorterDuffGlobalAlpha,
-            .srcGlobalAlphaMode = lv_img_cf_has_alpha(cf) ? kPXP_PorterDuffLocalAlpha : kPXP_PorterDuffGlobalAlpha,
-            .dstFactorMode = kPXP_PorterDuffFactorStraight,
-            .srcFactorMode = kPXP_PorterDuffFactorInversed,
+            .dstColorMode = PXP_PORTER_DUFF_COLOR_WITH_ALPHA,
+            .srcColorMode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
+            .dstGlobalAlphaMode = PXP_PORTER_DUFF_GLOBAL_ALPHA,
+            .srcGlobalAlphaMode = lv_img_cf_has_alpha(cf) ? PXP_PORTER_DUFF_LOCAL_ALPHA : PXP_PORTER_DUFF_GLOBAL_ALPHA,
+            .dstFactorMode = PXP_PORTER_DUFF_FACTOR_STRAIGHT,
+            .srcFactorMode = PXP_PORTER_DUFF_FACTOR_INVERSED,
             .dstGlobalAlpha = has_recolor ? dsc->recolor_opa : 0x00,
             .srcGlobalAlpha = 0xff,
-            .dstAlphaMode = kPXP_PorterDuffAlphaStraight, /*don't care*/
-            .srcAlphaMode = kPXP_PorterDuffAlphaStraight
+            .dstAlphaMode = PXP_PORTER_DUFF_ALPHA_STRAIGHT, /*don't care*/
+            .srcAlphaMode = PXP_PORTER_DUFF_ALPHA_STRAIGHT
         };
-        PXP_SetPorterDuffConfig(LV_GPU_NXP_PXP_ID, &pdConfig);
+        pxp_set_porter_duff_config(&pdConfig);
     }
 
     lv_gpu_nxp_pxp_run();
@@ -485,13 +485,13 @@ static void lv_pxp_blit_cf(lv_color_t * dest_buf, const lv_area_t * dest_area, l
     pxp_as_blend_config_t asBlendConfig = {
         .alpha = dsc->opa,
         .invertAlpha = false,
-        .alphaMode = kPXP_AlphaRop,
-        .ropMode = kPXP_RopMergeAs
+        .alphaMode = PXP_ALPHA_ROP,
+        .ropMode = PXP_ROP_MERGE_AS
     };
 
     if(dsc->opa >= (lv_opa_t)LV_OPA_MAX && !lv_img_cf_is_chroma_keyed(cf) && !lv_img_cf_has_alpha(cf)) {
         /*Simple blit, no effect - Disable PS buffer*/
-        PXP_SetProcessSurfacePosition(LV_GPU_NXP_PXP_ID, 0xFFFFU, 0xFFFFU, 0U, 0U);
+        pxp_set_process_surface_position(0xFFFFU, 0xFFFFU, 0U, 0U);
     }
     else {
         /*PS must be enabled to fetch background pixels.
@@ -505,13 +505,13 @@ static void lv_pxp_blit_cf(lv_color_t * dest_buf, const lv_area_t * dest_area, l
             .pitchBytes = dest_stride * sizeof(lv_color_t)
         };
         if(dsc->opa >= (lv_opa_t)LV_OPA_MAX) {
-            asBlendConfig.alphaMode = lv_img_cf_has_alpha(cf) ? kPXP_AlphaEmbedded : kPXP_AlphaOverride;
+            asBlendConfig.alphaMode = lv_img_cf_has_alpha(cf) ? PXP_ALPHA_EMBEDDED : PXP_ALPHA_OVERRIDE;
         }
         else {
-            asBlendConfig.alphaMode = lv_img_cf_has_alpha(cf) ? kPXP_AlphaMultiply : kPXP_AlphaOverride;
+            asBlendConfig.alphaMode = lv_img_cf_has_alpha(cf) ? PXP_ALPHA_MULTIPLY : PXP_ALPHA_OVERRIDE;
         }
-        PXP_SetProcessSurfaceBufferConfig(LV_GPU_NXP_PXP_ID, &psBufferConfig);
-        PXP_SetProcessSurfacePosition(LV_GPU_NXP_PXP_ID, 0U, 0U, dest_w - 1U, dest_h - 1U);
+        pxp_set_process_surface_buffer_config(&psBufferConfig);
+        pxp_set_process_surface_position(0U, 0U, dest_w - 1U, dest_h - 1U);
     }
 
     /*AS buffer - source image*/
@@ -520,9 +520,9 @@ static void lv_pxp_blit_cf(lv_color_t * dest_buf, const lv_area_t * dest_area, l
         .bufferAddr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
         .pitchBytes = src_stride * sizeof(lv_color_t)
     };
-    PXP_SetAlphaSurfaceBufferConfig(LV_GPU_NXP_PXP_ID, &asBufferConfig);
-    PXP_SetAlphaSurfacePosition(LV_GPU_NXP_PXP_ID, 0U, 0U, src_w - 1U, src_h - 1U);
-    PXP_SetAlphaSurfaceBlendConfig(LV_GPU_NXP_PXP_ID, &asBlendConfig);
+    pxp_set_alpha_surface_buffer_config(&asBufferConfig);
+    pxp_set_alpha_surface_position(0U, 0U, src_w - 1U, src_h - 1U);
+    pxp_set_alpha_surface_blend_config(&asBlendConfig);
 
     if(lv_img_cf_is_chroma_keyed(cf)) {
         lv_color_t colorKeyLow = LV_COLOR_CHROMA_KEY;
@@ -549,23 +549,23 @@ static void lv_pxp_blit_cf(lv_color_t * dest_buf, const lv_area_t * dest_area, l
 #endif
         }
 
-        PXP_SetAlphaSurfaceOverlayColorKey(LV_GPU_NXP_PXP_ID, lv_color_to32(colorKeyLow),
+        pxp_set_alpha_surface_overlay_color_key(lv_color_to32(colorKeyLow),
                                            lv_color_to32(colorKeyHigh));
     }
 
-    PXP_EnableAlphaSurfaceOverlayColorKey(LV_GPU_NXP_PXP_ID, lv_img_cf_is_chroma_keyed(cf));
+    pxp_enable_alpha_surface_overlay_color_key(lv_img_cf_is_chroma_keyed(cf));
 
     /*Output buffer.*/
     pxp_output_buffer_config_t outputBufferConfig = {
         .pixelFormat = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
-        .interlacedMode = kPXP_OutputProgressive,
+        .interlacedMode = PXP_OUTPUT_PROGRESSIVE,
         .buffer0Addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
         .buffer1Addr = (uint32_t)0U,
         .pitchBytes = dest_stride * sizeof(lv_color_t),
         .width = dest_w,
         .height = dest_h
     };
-    PXP_SetOutputBufferConfig(LV_GPU_NXP_PXP_ID, &outputBufferConfig);
+    pxp_set_output_buffer_config(&outputBufferConfig);
 
     lv_gpu_nxp_pxp_run();
 }

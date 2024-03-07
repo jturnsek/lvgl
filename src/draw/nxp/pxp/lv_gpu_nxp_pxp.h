@@ -41,8 +41,10 @@ extern "C" {
 #include "../../../lv_conf_internal.h"
 
 #if LV_USE_GPU_NXP_PXP
-#include "fsl_cache.h"
-#include "fsl_pxp.h"
+#include <nuttx/arch.h>
+#include <nuttx/cache.h>
+#include <nuttx/config.h>
+#include "imxrt_pxp.h"
 
 #include "../../../misc/lv_log.h"
 
@@ -50,11 +52,8 @@ extern "C" {
  *      DEFINES
  *********************/
 
-/** PXP module instance to use*/
-#define LV_GPU_NXP_PXP_ID PXP
-
 /** PXP interrupt line ID*/
-#define LV_GPU_NXP_PXP_IRQ_ID PXP_IRQn
+#define LV_GPU_NXP_PXP_IRQ_ID IMXRT_IRQ_PXP
 
 #ifndef LV_GPU_NXP_PXP_LOG_ERRORS
 /** Enable logging of PXP errors (\see LV_LOG_ERROR)*/
