@@ -214,7 +214,7 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     lv_gpu_nxp_pxp_reset();
 
     /* convert rotation angle */
-    pxp_rotate_degree_t pxp_rot;
+    enum pxp_rotate_degree_e pxp_rot;
     switch(angle) {
         case LV_DISP_ROT_NONE:
             pxp_rot = PXP_ROTATE0;
@@ -371,6 +371,7 @@ static void lv_pxp_blit_opa(lv_color_t * dest_buf, const lv_area_t * dest_area, 
     /*Step 2: Blit temporary result with required opacity to output*/
     lv_pxp_blit_cf(dest_buf, &temp_area, dest_stride, (lv_color_t *)temp_buf, &temp_area, temp_stride, dsc, cf);
 }
+
 static void lv_pxp_blit_cover(lv_color_t * dest_buf, lv_area_t * dest_area, lv_coord_t dest_stride,
                               const lv_color_t * src_buf, const lv_area_t * src_area, lv_coord_t src_stride,
                               const lv_draw_img_dsc_t * dsc, lv_img_cf_t cf)
@@ -391,7 +392,7 @@ static void lv_pxp_blit_cover(lv_color_t * dest_buf, lv_area_t * dest_area, lv_c
 
     if(has_rotation) {
         /*Convert rotation angle and calculate offsets caused by pivot*/
-        pxp_rotate_degree_t pxp_angle;
+        enum pxp_rotate_degree_e pxp_angle;
         switch(dsc->angle) {
             case 0:
                 pxp_angle = PXP_ROTATE0;
