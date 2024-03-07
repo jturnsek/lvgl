@@ -143,7 +143,7 @@ void lv_gpu_nxp_pxp_fill(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     lv_gpu_nxp_pxp_reset();
 
     /*OUT buffer configure*/
-    pxp_output_buffer_config_s outputConfig = {
+    struct pxp_output_buffer_config_s outputConfig = {
         .pixel_format = PXP_OUT_PIXEL_FORMAT,
         .interlaced_mode = PXP_OUTPUT_PROGRESSIVE,
         .buffer0_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
@@ -162,7 +162,7 @@ void lv_gpu_nxp_pxp_fill(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     }
     else {
         /*Fill with opacity - AS used as source (same as OUT)*/
-        pxp_as_buffer_config_s asBufferConfig = {
+        struct pxp_as_buffer_config_s asBufferConfig = {
             .pixel_format = PXP_AS_PIXEL_FORMAT,
             .buffer_addr = (uint32_t)outputConfig.buffer0_addr,
             .pitch_bytes = outputConfig.pitch_bytes
@@ -183,7 +183,7 @@ void lv_gpu_nxp_pxp_fill(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
      * srcFactorMode is actually applied on PS alpha value
      * dstFactorMode is actually applied on AS alpha value
      */
-    pxp_porter_duff_config_s pdConfig = {
+    struct pxp_porter_duff_config_s pdConfig = {
         .enable = 1,
         .dst_color_mode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
         .src_color_mode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
@@ -234,7 +234,7 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     }
     pxp_set_rotate_config(PXP_ROTATE_OUTPUT_BUFFER, pxp_rot, PXP_FLIP_DISABLE);
 
-    pxp_as_blend_config_s asBlendConfig = {
+    struct pxp_as_blend_config_s asBlendConfig = {
         .alpha = opa,
         .invert_alpha = false,
         .alpha_mode = PXP_ALPHA_ROP,
@@ -246,7 +246,7 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
         pxp_set_process_surface_position(0xFFFFU, 0xFFFFU, 0U, 0U);
     }
     else {
-        pxp_ps_buffer_config_s psBufferConfig = {
+        struct pxp_ps_buffer_config_s psBufferConfig = {
             .pixel_format = PXP_PS_PIXEL_FORMAT,
             .swap_byte = false,
             .buffer_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
@@ -262,7 +262,7 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     }
 
     /*AS buffer - source image*/
-    pxp_as_buffer_config_s asBufferConfig = {
+    struct pxp_as_buffer_config_s asBufferConfig = {
         .pixel_format = PXP_AS_PIXEL_FORMAT,
         .buffer_addr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
         .pitch_bytes = src_stride * sizeof(lv_color_t)
@@ -273,8 +273,8 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     pxp_enable_alpha_surface_overlay_color_key(false);
 
     /*Output buffer.*/
-    pxp_output_buffer_config_s outputBufferConfig = {
-        .pixel_format = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
+    struct pxp_output_buffer_config_s outputBufferConfig = {
+        .pixel_format = (enum pxp_output_pixel_format_e)PXP_OUT_PIXEL_FORMAT,
         .interlaced_mode = PXP_OUTPUT_PROGRESSIVE,
         .buffer0_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
         .buffer1_addr = (uint32_t)0U,
@@ -317,7 +317,7 @@ void lv_gpu_nxp_pxp_buffer_copy(lv_color_t * dest_buf, const lv_area_t * dest_ar
 
     lv_gpu_nxp_pxp_reset();
 
-    const pxp_pic_copy_config_s picCopyConfig = {
+    const struct pxp_pic_copy_config_s picCopyConfig = {
         .src_pic_base_addr = (uint32_t)src_buf,
         .src_pitch_bytes = src_stride * sizeof(lv_color_t),
         .src_offset_x = src_area->x1,
@@ -423,7 +423,7 @@ static void lv_pxp_blit_cover(lv_color_t * dest_buf, lv_area_t * dest_area, lv_c
     }
 
     /*AS buffer - source image*/
-    pxp_as_buffer_config_s asBufferConfig = {
+    struct pxp_as_buffer_config_s asBufferConfig = {
         .pixel_format = PXP_AS_PIXEL_FORMAT,
         .buffer_addr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
         .pitch_bytes = src_stride * sizeof(lv_color_t)
@@ -438,8 +438,8 @@ static void lv_pxp_blit_cover(lv_color_t * dest_buf, lv_area_t * dest_area, lv_c
         pxp_set_process_surface_back_ground_color(lv_color_to32(dsc->recolor));
 
     /*Output buffer*/
-    pxp_output_buffer_config_s outputBufferConfig = {
-        .pixel_format = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
+    struct pxp_output_buffer_config_s outputBufferConfig = {
+        .pixel_format = (enum pxp_output_pixel_format_e)PXP_OUT_PIXEL_FORMAT,
         .interlaced_mode = PXP_OUTPUT_PROGRESSIVE,
         .buffer0_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
         .buffer1_addr = (uint32_t)0U,
@@ -457,7 +457,7 @@ static void lv_pxp_blit_cover(lv_color_t * dest_buf, lv_area_t * dest_area, lv_c
          * srcFactorMode is actually applied on PS alpha value
          * dstFactorMode is actually applied on AS alpha value
          */
-        pxp_porter_duff_config_s pdConfig = {
+        struct pxp_porter_duff_config_s pdConfig = {
             .enable = 1,
             .dst_color_mode = PXP_PORTER_DUFF_COLOR_WITH_ALPHA,
             .src_color_mode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
@@ -487,7 +487,7 @@ static void lv_pxp_blit_cf(lv_color_t * dest_buf, const lv_area_t * dest_area, l
 
     lv_gpu_nxp_pxp_reset();
 
-    pxp_as_blend_config_s asBlendConfig = {
+    struct pxp_as_blend_config_s asBlendConfig = {
         .alpha = dsc->opa,
         .invert_alpha = false,
         .alpha_mode = PXP_ALPHA_ROP,
@@ -501,7 +501,7 @@ static void lv_pxp_blit_cf(lv_color_t * dest_buf, const lv_area_t * dest_area, l
     else {
         /*PS must be enabled to fetch background pixels.
           PS and OUT buffers are the same, blend will be done in-place*/
-        pxp_ps_buffer_config_s psBufferConfig = {
+        struct pxp_ps_buffer_config_s psBufferConfig = {
             .pixel_format = PXP_PS_PIXEL_FORMAT,
             .swap_byte = false,
             .buffer_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
@@ -520,7 +520,7 @@ static void lv_pxp_blit_cf(lv_color_t * dest_buf, const lv_area_t * dest_area, l
     }
 
     /*AS buffer - source image*/
-    pxp_as_buffer_config_s asBufferConfig = {
+    struct pxp_as_buffer_config_s asBufferConfig = {
         .pixel_format = PXP_AS_PIXEL_FORMAT,
         .buffer_addr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
         .pitch_bytes = src_stride * sizeof(lv_color_t)
@@ -561,8 +561,8 @@ static void lv_pxp_blit_cf(lv_color_t * dest_buf, const lv_area_t * dest_area, l
     pxp_enable_alpha_surface_overlay_color_key(lv_img_cf_is_chroma_keyed(cf));
 
     /*Output buffer.*/
-    pxp_output_buffer_config_s outputBufferConfig = {
-        .pixel_format = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
+    struct pxp_output_buffer_config_s outputBufferConfig = {
+        .pixel_format = (enum pxp_output_pixel_format_e)PXP_OUT_PIXEL_FORMAT,
         .interlaced_mode = PXP_OUTPUT_PROGRESSIVE,
         .buffer0_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
         .buffer1_addr = (uint32_t)0U,
