@@ -61,6 +61,8 @@
     #error Only 16bit and 32bit color depth are supported. Set LV_COLOR_DEPTH to 16 or 32.
 #endif
 
+#define ALIGN_SIZE 4
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -352,12 +354,7 @@ static void lv_pxp_blit_opa(lv_color_t * dest_buf, const lv_area_t * dest_area, 
 
     uint32_t size = temp_w * temp_h * sizeof(lv_color_t);
 
-    if(ROUND_UP(size, ALIGN_SIZE) >= LV_MEM_SIZE)
-        PXP_RETURN_INV("Insufficient memory for temporary buffer. Please increase LV_MEM_SIZE.");
-
     lv_color_t * temp_buf = (lv_color_t *)lv_mem_buf_get(size);
-    if(!temp_buf)
-        PXP_RETURN_INV("Allocating temporary buffer failed.");
 
     /*Step 1: Transform with full opacity to temporary buffer*/
     lv_pxp_blit_cover((lv_color_t *)temp_buf, &temp_area, temp_stride, src_buf, src_area, src_stride, dsc, cf);
