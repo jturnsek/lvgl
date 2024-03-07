@@ -109,7 +109,7 @@ void lv_draw_pxp_ctx_deinit(lv_disp_drv_t * drv, lv_draw_ctx_t * draw_ctx)
  * the target pixel format is ARGB8565 which is not supported by the GPU.
  * In this case, the PXP callbacks should fallback to SW rendering.
  */
-static inline bool need_argb8565_support()
+static bool need_argb8565_support(void)
 {
 #if LV_COLOR_DEPTH != 32
     lv_disp_t * disp = _lv_refr_get_disp_refreshing();

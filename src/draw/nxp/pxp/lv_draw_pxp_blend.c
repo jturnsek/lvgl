@@ -48,7 +48,6 @@
     #define PXP_OUT_PIXEL_FORMAT PXP_OUTPUT_PIXEL_FORMAT_RGB565
     #define PXP_AS_PIXEL_FORMAT PXP_AS_PIXEL_FORMAT_RGB565
     #define PXP_PS_PIXEL_FORMAT PXP_PS_PIXEL_FORMAT_RGB565
-    #define PXP_TEMP_BUF_SIZE LCD_WIDTH * LCD_HEIGHT * 2U
 #elif LV_COLOR_DEPTH == 32
     #define PXP_OUT_PIXEL_FORMAT PXP_OUTPUT_PIXEL_FORMAT_ARGB8888
     #define PXP_AS_PIXEL_FORMAT PXP_AS_PIXEL_FORMAT_ARGB8888
@@ -58,7 +57,6 @@
     #else
         #define PXP_PS_PIXEL_FORMAT PXP_PS_PIXEL_FORMAT_RGB888
     #endif
-    #define PXP_TEMP_BUF_SIZE LCD_WIDTH * LCD_HEIGHT * 4U
 #elif
     #error Only 16bit and 32bit color depth are supported. Set LV_COLOR_DEPTH to 16 or 32.
 #endif
@@ -70,8 +68,6 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-
-static LV_ATTRIBUTE_MEM_ALIGN uint8_t temp_buf[PXP_TEMP_BUF_SIZE];
 
 /**
  * BLock Image Transfer - copy rectangular image from src buffer to dst buffer
@@ -147,12 +143,12 @@ void lv_gpu_nxp_pxp_fill(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     lv_gpu_nxp_pxp_reset();
 
     /*OUT buffer configure*/
-    pxp_output_buffer_config_t outputConfig = {
-        .pixelFormat = PXP_OUT_PIXEL_FORMAT,
-        .interlacedMode = PXP_OUTPUT_PROGRESSIVE,
-        .buffer0Addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
-        .buffer1Addr = (uint32_t)NULL,
-        .pitchBytes = dest_stride * sizeof(lv_color_t),
+    pxp_output_buffer_config_s outputConfig = {
+        .pixel_format = PXP_OUT_PIXEL_FORMAT,
+        .interlaced_mode = PXP_OUTPUT_PROGRESSIVE,
+        .buffer0_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
+        .buffer1_addr = (uint32_t)NULL,
+        .pitch_bytes = dest_stride * sizeof(lv_color_t),
         .width = dest_w,
         .height = dest_h
     };
@@ -166,10 +162,10 @@ void lv_gpu_nxp_pxp_fill(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     }
     else {
         /*Fill with opacity - AS used as source (same as OUT)*/
-        pxp_as_buffer_config_t asBufferConfig = {
-            .pixelFormat = PXP_AS_PIXEL_FORMAT,
-            .bufferAddr = (uint32_t)outputConfig.buffer0Addr,
-            .pitchBytes = outputConfig.pitchBytes
+        pxp_as_buffer_config_s asBufferConfig = {
+            .pixel_format = PXP_AS_PIXEL_FORMAT,
+            .buffer_addr = (uint32_t)outputConfig.buffer0_addr,
+            .pitch_bytes = outputConfig.pitch_bytes
         };
 
         pxp_set_alpha_surface_buffer_config(&asBufferConfig);
@@ -187,18 +183,18 @@ void lv_gpu_nxp_pxp_fill(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
      * srcFactorMode is actually applied on PS alpha value
      * dstFactorMode is actually applied on AS alpha value
      */
-    pxp_porter_duff_config_t pdConfig = {
+    pxp_porter_duff_config_s pdConfig = {
         .enable = 1,
-        .dstColorMode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
-        .srcColorMode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
-        .dstGlobalAlphaMode = PXP_PORTER_DUFF_GLOBAL_ALPHA,
-        .srcGlobalAlphaMode = PXP_PORTER_DUFF_GLOBAL_ALPHA,
-        .dstFactorMode = PXP_PORTER_DUFF_FACTOR_STRAIGHT,
-        .srcFactorMode = (opa >= (lv_opa_t)LV_OPA_MAX) ? PXP_PORTER_DUFF_FACTOR_STRAIGHT : PXP_PORTER_DUFF_FACTOR_INVERSED,
-        .dstGlobalAlpha = opa,
-        .srcGlobalAlpha = opa,
-        .dstAlphaMode = PXP_PORTER_DUFF_ALPHA_STRAIGHT, /*don't care*/
-        .srcAlphaMode = PXP_PORTER_DUFF_ALPHA_STRAIGHT  /*don't care*/
+        .dst_color_mode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
+        .src_color_mode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
+        .dst_global_alpha_mode = PXP_PORTER_DUFF_GLOBAL_ALPHA,
+        .src_global_alpha_mode = PXP_PORTER_DUFF_GLOBAL_ALPHA,
+        .dst_factor_mode = PXP_PORTER_DUFF_FACTOR_STRAIGHT,
+        .src_factor_mode = (opa >= (lv_opa_t)LV_OPA_MAX) ? PXP_PORTER_DUFF_FACTOR_STRAIGHT : PXP_PORTER_DUFF_FACTOR_INVERSED,
+        .dst_global_alpha = opa,
+        .src_global_alpha = opa,
+        .dst_alpha_mode = PXP_PORTER_DUFF_ALPHA_STRAIGHT, /*don't care*/
+        .src_alpha_mode = PXP_PORTER_DUFF_ALPHA_STRAIGHT  /*don't care*/
     };
 
     pxp_set_porter_duff_config(&pdConfig);
@@ -238,11 +234,11 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     }
     pxp_set_rotate_config(PXP_ROTATE_OUTPUT_BUFFER, pxp_rot, PXP_FLIP_DISABLE);
 
-    pxp_as_blend_config_t asBlendConfig = {
+    pxp_as_blend_config_s asBlendConfig = {
         .alpha = opa,
-        .invertAlpha = false,
-        .alphaMode = PXP_ALPHA_ROP,
-        .ropMode = PXP_ROP_MERGE_AS
+        .invert_alpha = false,
+        .alpha_mode = PXP_ALPHA_ROP,
+        .rop_mode = PXP_ROP_MERGE_AS
     };
 
     if(opa >= (lv_opa_t)LV_OPA_MAX) {
@@ -250,26 +246,26 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
         pxp_set_process_surface_position(0xFFFFU, 0xFFFFU, 0U, 0U);
     }
     else {
-        pxp_ps_buffer_config_t psBufferConfig = {
-            .pixelFormat = PXP_PS_PIXEL_FORMAT,
-            .swapByte = false,
-            .bufferAddr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
-            .bufferAddrU = 0U,
-            .bufferAddrV = 0U,
-            .pitchBytes = dest_stride * sizeof(lv_color_t)
+        pxp_ps_buffer_config_s psBufferConfig = {
+            .pixel_format = PXP_PS_PIXEL_FORMAT,
+            .swap_byte = false,
+            .buffer_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
+            .buffer_addr_u = 0U,
+            .buffer_addr_v = 0U,
+            .pitch_bytes = dest_stride * sizeof(lv_color_t)
         };
 
-        asBlendConfig.alphaMode = PXP_ALPHA_OVERRIDE;
+        asBlendConfig.alpha_mode = PXP_ALPHA_OVERRIDE;
 
         pxp_set_process_surface_buffer_config(&psBufferConfig);
         pxp_set_process_surface_position(0U, 0U, dest_w - 1U, dest_h - 1U);
     }
 
     /*AS buffer - source image*/
-    pxp_as_buffer_config_t asBufferConfig = {
-        .pixelFormat = PXP_AS_PIXEL_FORMAT,
-        .bufferAddr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
-        .pitchBytes = src_stride * sizeof(lv_color_t)
+    pxp_as_buffer_config_s asBufferConfig = {
+        .pixel_format = PXP_AS_PIXEL_FORMAT,
+        .buffer_addr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
+        .pitch_bytes = src_stride * sizeof(lv_color_t)
     };
     pxp_set_alpha_surface_buffer_config(&asBufferConfig);
     pxp_set_alpha_surface_position(0U, 0U, src_w - 1U, src_h - 1U);
@@ -277,12 +273,12 @@ void lv_gpu_nxp_pxp_blit(lv_color_t * dest_buf, const lv_area_t * dest_area, lv_
     pxp_enable_alpha_surface_overlay_color_key(false);
 
     /*Output buffer.*/
-    pxp_output_buffer_config_t outputBufferConfig = {
-        .pixelFormat = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
-        .interlacedMode = PXP_OUTPUT_PROGRESSIVE,
-        .buffer0Addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
-        .buffer1Addr = (uint32_t)0U,
-        .pitchBytes = dest_stride * sizeof(lv_color_t),
+    pxp_output_buffer_config_s outputBufferConfig = {
+        .pixel_format = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
+        .interlaced_mode = PXP_OUTPUT_PROGRESSIVE,
+        .buffer0_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
+        .buffer1_addr = (uint32_t)0U,
+        .pitch_bytes = dest_stride * sizeof(lv_color_t),
         .width = dest_w,
         .height = dest_h
     };
@@ -321,18 +317,18 @@ void lv_gpu_nxp_pxp_buffer_copy(lv_color_t * dest_buf, const lv_area_t * dest_ar
 
     lv_gpu_nxp_pxp_reset();
 
-    const pxp_pic_copy_config_t picCopyConfig = {
-        .srcPicBaseAddr = (uint32_t)src_buf,
-        .srcPitchBytes = src_stride * sizeof(lv_color_t),
-        .srcOffsetX = src_area->x1,
-        .srcOffsetY = src_area->y1,
-        .destPicBaseAddr = (uint32_t)dest_buf,
-        .destPitchBytes = dest_stride * sizeof(lv_color_t),
-        .destOffsetX = dest_area->x1,
-        .destOffsetY = dest_area->y1,
+    const pxp_pic_copy_config_s picCopyConfig = {
+        .src_pic_base_addr = (uint32_t)src_buf,
+        .src_pitch_bytes = src_stride * sizeof(lv_color_t),
+        .src_offset_x = src_area->x1,
+        .src_offset_y = src_area->y1,
+        .dest_pic_base_addr = (uint32_t)dest_buf,
+        .dest_pitch_bytes = dest_stride * sizeof(lv_color_t),
+        .dest_offset_x = dest_area->x1,
+        .dest_offset_y = dest_area->y1,
         .width = src_width,
         .height = src_height,
-        .pixelFormat = PXP_AS_PIXEL_FORMAT
+        .pixel_format = PXP_AS_PIXEL_FORMAT
     };
 
     pxp_start_picture_copy(&picCopyConfig);
@@ -353,6 +349,15 @@ static void lv_pxp_blit_opa(lv_color_t * dest_buf, const lv_area_t * dest_area, 
     lv_coord_t temp_stride = dest_stride;
     lv_coord_t temp_w = lv_area_get_width(&temp_area);
     lv_coord_t temp_h = lv_area_get_height(&temp_area);
+
+    uint32_t size = temp_w * temp_h * sizeof(lv_color_t);
+
+    if(ROUND_UP(size, ALIGN_SIZE) >= LV_MEM_SIZE)
+        PXP_RETURN_INV("Insufficient memory for temporary buffer. Please increase LV_MEM_SIZE.");
+
+    lv_color_t * temp_buf = (lv_color_t *)lv_mem_buf_get(size);
+    if(!temp_buf)
+        PXP_RETURN_INV("Allocating temporary buffer failed.");
 
     /*Step 1: Transform with full opacity to temporary buffer*/
     lv_pxp_blit_cover((lv_color_t *)temp_buf, &temp_area, temp_stride, src_buf, src_area, src_stride, dsc, cf);
@@ -418,10 +423,10 @@ static void lv_pxp_blit_cover(lv_color_t * dest_buf, lv_area_t * dest_area, lv_c
     }
 
     /*AS buffer - source image*/
-    pxp_as_buffer_config_t asBufferConfig = {
-        .pixelFormat = PXP_AS_PIXEL_FORMAT,
-        .bufferAddr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
-        .pitchBytes = src_stride * sizeof(lv_color_t)
+    pxp_as_buffer_config_s asBufferConfig = {
+        .pixel_format = PXP_AS_PIXEL_FORMAT,
+        .buffer_addr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
+        .pitch_bytes = src_stride * sizeof(lv_color_t)
     };
     pxp_set_alpha_surface_buffer_config(&asBufferConfig);
     pxp_set_alpha_surface_position(0U, 0U, src_w - 1U, src_h - 1U);
@@ -433,12 +438,12 @@ static void lv_pxp_blit_cover(lv_color_t * dest_buf, lv_area_t * dest_area, lv_c
         pxp_set_process_surface_back_ground_color(lv_color_to32(dsc->recolor));
 
     /*Output buffer*/
-    pxp_output_buffer_config_t outputBufferConfig = {
-        .pixelFormat = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
-        .interlacedMode = PXP_OUTPUT_PROGRESSIVE,
-        .buffer0Addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
-        .buffer1Addr = (uint32_t)0U,
-        .pitchBytes = dest_stride * sizeof(lv_color_t),
+    pxp_output_buffer_config_s outputBufferConfig = {
+        .pixel_format = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
+        .interlaced_mode = PXP_OUTPUT_PROGRESSIVE,
+        .buffer0_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
+        .buffer1_addr = (uint32_t)0U,
+        .pitch_bytes = dest_stride * sizeof(lv_color_t),
         .width = dest_w,
         .height = dest_h
     };
@@ -452,18 +457,18 @@ static void lv_pxp_blit_cover(lv_color_t * dest_buf, lv_area_t * dest_area, lv_c
          * srcFactorMode is actually applied on PS alpha value
          * dstFactorMode is actually applied on AS alpha value
          */
-        pxp_porter_duff_config_t pdConfig = {
+        pxp_porter_duff_config_s pdConfig = {
             .enable = 1,
-            .dstColorMode = PXP_PORTER_DUFF_COLOR_WITH_ALPHA,
-            .srcColorMode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
-            .dstGlobalAlphaMode = PXP_PORTER_DUFF_GLOBAL_ALPHA,
-            .srcGlobalAlphaMode = lv_img_cf_has_alpha(cf) ? PXP_PORTER_DUFF_LOCAL_ALPHA : PXP_PORTER_DUFF_GLOBAL_ALPHA,
-            .dstFactorMode = PXP_PORTER_DUFF_FACTOR_STRAIGHT,
-            .srcFactorMode = PXP_PORTER_DUFF_FACTOR_INVERSED,
-            .dstGlobalAlpha = has_recolor ? dsc->recolor_opa : 0x00,
-            .srcGlobalAlpha = 0xff,
-            .dstAlphaMode = PXP_PORTER_DUFF_ALPHA_STRAIGHT, /*don't care*/
-            .srcAlphaMode = PXP_PORTER_DUFF_ALPHA_STRAIGHT
+            .dst_color_mode = PXP_PORTER_DUFF_COLOR_WITH_ALPHA,
+            .src_color_mode = PXP_PORTER_DUFF_COLOR_NO_ALPHA,
+            .dst_global_alpha_mode = PXP_PORTER_DUFF_GLOBAL_ALPHA,
+            .src_global_alpha_mode = lv_img_cf_has_alpha(cf) ? PXP_PORTER_DUFF_LOCAL_ALPHA : PXP_PORTER_DUFF_GLOBAL_ALPHA,
+            .dst_factor_mode = PXP_PORTER_DUFF_FACTOR_STRAIGHT,
+            .src_factor_mode = PXP_PORTER_DUFF_FACTOR_INVERSED,
+            .dst_global_alpha = has_recolor ? dsc->recolor_opa : 0x00,
+            .src_global_alpha = 0xff,
+            .dst_alpha_mode = PXP_PORTER_DUFF_ALPHA_STRAIGHT, /*don't care*/
+            .src_alpha_mode = PXP_PORTER_DUFF_ALPHA_STRAIGHT
         };
         pxp_set_porter_duff_config(&pdConfig);
     }
@@ -482,11 +487,11 @@ static void lv_pxp_blit_cf(lv_color_t * dest_buf, const lv_area_t * dest_area, l
 
     lv_gpu_nxp_pxp_reset();
 
-    pxp_as_blend_config_t asBlendConfig = {
+    pxp_as_blend_config_s asBlendConfig = {
         .alpha = dsc->opa,
-        .invertAlpha = false,
-        .alphaMode = PXP_ALPHA_ROP,
-        .ropMode = PXP_ROP_MERGE_AS
+        .invert_alpha = false,
+        .alpha_mode = PXP_ALPHA_ROP,
+        .rop_mode = PXP_ROP_MERGE_AS
     };
 
     if(dsc->opa >= (lv_opa_t)LV_OPA_MAX && !lv_img_cf_is_chroma_keyed(cf) && !lv_img_cf_has_alpha(cf)) {
@@ -496,29 +501,29 @@ static void lv_pxp_blit_cf(lv_color_t * dest_buf, const lv_area_t * dest_area, l
     else {
         /*PS must be enabled to fetch background pixels.
           PS and OUT buffers are the same, blend will be done in-place*/
-        pxp_ps_buffer_config_t psBufferConfig = {
-            .pixelFormat = PXP_PS_PIXEL_FORMAT,
-            .swapByte = false,
-            .bufferAddr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
-            .bufferAddrU = 0U,
-            .bufferAddrV = 0U,
-            .pitchBytes = dest_stride * sizeof(lv_color_t)
+        pxp_ps_buffer_config_s psBufferConfig = {
+            .pixel_format = PXP_PS_PIXEL_FORMAT,
+            .swap_byte = false,
+            .buffer_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
+            .buffer_addr_u = 0U,
+            .buffer_addr_v = 0U,
+            .pitch_bytes = dest_stride * sizeof(lv_color_t)
         };
         if(dsc->opa >= (lv_opa_t)LV_OPA_MAX) {
-            asBlendConfig.alphaMode = lv_img_cf_has_alpha(cf) ? PXP_ALPHA_EMBEDDED : PXP_ALPHA_OVERRIDE;
+            asBlendConfig.alpha_mode = lv_img_cf_has_alpha(cf) ? PXP_ALPHA_EMBEDDED : PXP_ALPHA_OVERRIDE;
         }
         else {
-            asBlendConfig.alphaMode = lv_img_cf_has_alpha(cf) ? PXP_ALPHA_MULTIPLY : PXP_ALPHA_OVERRIDE;
+            asBlendConfig.alpha_mode = lv_img_cf_has_alpha(cf) ? PXP_ALPHA_MULTIPLY : PXP_ALPHA_OVERRIDE;
         }
         pxp_set_process_surface_buffer_config(&psBufferConfig);
         pxp_set_process_surface_position(0U, 0U, dest_w - 1U, dest_h - 1U);
     }
 
     /*AS buffer - source image*/
-    pxp_as_buffer_config_t asBufferConfig = {
-        .pixelFormat = PXP_AS_PIXEL_FORMAT,
-        .bufferAddr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
-        .pitchBytes = src_stride * sizeof(lv_color_t)
+    pxp_as_buffer_config_s asBufferConfig = {
+        .pixel_format = PXP_AS_PIXEL_FORMAT,
+        .buffer_addr = (uint32_t)(src_buf + src_stride * src_area->y1 + src_area->x1),
+        .pitch_bytes = src_stride * sizeof(lv_color_t)
     };
     pxp_set_alpha_surface_buffer_config(&asBufferConfig);
     pxp_set_alpha_surface_position(0U, 0U, src_w - 1U, src_h - 1U);
@@ -556,12 +561,12 @@ static void lv_pxp_blit_cf(lv_color_t * dest_buf, const lv_area_t * dest_area, l
     pxp_enable_alpha_surface_overlay_color_key(lv_img_cf_is_chroma_keyed(cf));
 
     /*Output buffer.*/
-    pxp_output_buffer_config_t outputBufferConfig = {
-        .pixelFormat = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
-        .interlacedMode = PXP_OUTPUT_PROGRESSIVE,
-        .buffer0Addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
-        .buffer1Addr = (uint32_t)0U,
-        .pitchBytes = dest_stride * sizeof(lv_color_t),
+    pxp_output_buffer_config_s outputBufferConfig = {
+        .pixel_format = (pxp_output_pixel_format_t)PXP_OUT_PIXEL_FORMAT,
+        .interlaced_mode = PXP_OUTPUT_PROGRESSIVE,
+        .buffer0_addr = (uint32_t)(dest_buf + dest_stride * dest_area->y1 + dest_area->x1),
+        .buffer1_addr = (uint32_t)0U,
+        .pitch_bytes = dest_stride * sizeof(lv_color_t),
         .width = dest_w,
         .height = dest_h
     };
